@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Numberle Sprint</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <section class="panel">
+        <h1>Numberle Sprint</h1>
+        <p class="subtitle">Crack the 4-digit code before the timer hits zero.</p>
+
+        <div class="hud">
+          <div>
+            <span class="label">Time</span>
+            <div id="timer" class="timer">30s</div>
+          </div>
+          <button id="newGameBtn" class="secondary-btn">New Game</button>
+        </div>
+
+        <div class="input-row">
+          <div class="digit-inputs" role="group" aria-label="Enter a 4-digit guess">
+            <input class="digit-input" id="digit-0" type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 1" />
+            <input class="digit-input" id="digit-1" type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 2" />
+            <input class="digit-input" id="digit-2" type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 3" />
+            <input class="digit-input" id="digit-3" type="text" inputmode="numeric" maxlength="1" autocomplete="off" aria-label="Digit 4" />
+          </div>
+          <button id="submitBtn">Submit</button>
+        </div>
+
+        <p id="status" class="status">Enter a 4-digit number with unique digits.</p>
+        <p id="answer" class="answer"></p>
+
+        <div id="board" class="board"></div>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>
