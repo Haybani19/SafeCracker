@@ -1,0 +1,206 @@
+﻿const submitBtn = document.getElementById('submitBtn');
+const newGameBtn = document.getElementById('newGameBtn');
+const board = document.getElementById('board');
+const timerEl = document.getElementById('timer');
+const statusEl = document.getElementById('status');
+const answerEl = document.getElementById('answer');
+const guessInputs = Array.from(document.querySelectorAll('.digit-input'));
+
+let target = '';
+let gameOver = false;
+let timeLeft = 30;
+let timerId = null;
+let feedbackActive = false;
+let attempts = 0;
+
+function generateTarget() {
+  return Array.from({ length: 4 }, () => Math.floor(Math.random() * 10)).join('');
+}
+
+function updateTimer() {
+  timerEl.textContent = `${timeLeft}s`;
+  timerEl.classList.toggle('warning', timeLeft <= 10);
+}
+
+function renderBoard(result) {
+  board.innerHTML = '';
+
+  const row = document.createElement('div');
+  row.className = 'row';
+
+  result.forEach((tile) => {
+    const cell = document.createElement('div');
+    cell.className = `tile ${tile.status}`;
+    cell.textContent = tile.value;
+    row.appendChild(cell);
+  });
+
+  board.appendChild(row);
+}
+
+function resetInputFeedback() {
+  guessInputs.forEach((input) => {
+    input.value = '';
+    input.classList.remove('correct', 'present', 'absent');
+  });
+  board.innerHTML = '';
+  feedbackActive = false;
+}
+
+function applyFeedback(result) {
+  guessInputs.forEach((input, index) => {
+    input.value = result[index].value;
+    input.classList.remove('correct', 'present', 'absent');
+    input.classList.add(result[index].status);
+  });
+  feedbackActive = true;
+}
+
+function endGame(won) {
+  gameOver = true;
+  clearInterval(timerId);
+
+  guessInputs.forEach((input) => {
+    input.disabled = true;
+  });
+  submitBtn.disabled = true;
+
+  if (won) {
+    statusEl.textContent = `You solved it in ${attempts} try${attempts === 1 ? '' : 'ies'}!`;
+  } else {
+    statusEl.textContent = `Time's up! The answer was ${target}.`;
+  }
+
+  answerEl.textContent = `Answer: ${target}`;
+}
+
+function evaluateGuess(guess) {
+  const result = [];
+  const targetDigits = target.split('');
+  const guessDigits = guess.split('');
+  const usedTarget = Array(4).fill(false);
+
+  for (let i = 0; i < 4; i += 1) {
+    if (guessDigits[i] === targetDigits[i]) {
+      result.push({ value: guessDigits[i], status: 'correct' });
+      usedTarget[i] = true;
+    } else {
+      result.push({ value: guessDigits[i], status: 'absent' });
+    }
+  }
+
+  for (let i = 0; i < 4; i += 1) {
+    if (result[i].status === 'correct') {
+      continue;
+    }
+
+    const targetIndex = targetDigits.findIndex((digit, index) => digit === guessDigits[i] && !usedTarget[index]);
+
+    if (targetIndex !== -1) {
+      result[i].status = 'present';
+      usedTarget[targetIndex] = true;
+    }
+  }
+
+  return result;
+}
+
+function collectGuess() {
+  return guessInputs.map((input) => input.value).join('');
+}
+
+function startGame() {
+  target = generateTarget();
+  attempts = 0;
+  gameOver = false;
+  timeLeft = 30;
+  clearInterval(timerId);
+
+  guessInputs.forEach((input) => {
+    input.disabled = false;
+    input.value = '';
+    input.classList.remove('correct', 'present', 'absent');
+  });
+
+  board.innerHTML = '';
+  updateTimer();
+  statusEl.textContent = 'Enter a 4-digit number. Repeated digits are allowed.';
+  answerEl.textContent = '';
+  submitBtn.disabled = false;
+  feedbackActive = false;
+  guessInputs[0].focus();
+
+  timerId = setInterval(() => {
+    timeLeft -= 1;
+    updateTimer();
+
+    if (timeLeft <= 0) {
+      endGame(false);
+    }
+  }, 1000);
+}
+
+function handleGuess() {
+  if (gameOver) {
+    return;
+  }
+
+  const guess = collectGuess().trim();
+
+  if (!/^\d{4}$/.test(guess)) {
+    statusEl.textContent = 'Enter exactly 4 digits.';
+    return;
+  }
+
+  attempts += 1;
+  const result = evaluateGuess(guess);
+  applyFeedback(result);
+  renderBoard(result);
+
+  if (guess === target) {
+    endGame(true);
+    return;
+  }
+
+  statusEl.textContent = 'Keep going!';
+}
+
+submitBtn.addEventListener('click', handleGuess);
+newGameBtn.addEventListener('click', startGame);
+
+guessInputs.forEach((input, index) => {
+  input.addEventListener('input', (event) => {
+    const value = event.target.value.replace(/\D/g, '');
+    event.target.value = value;
+
+    if (feedbackActive) {
+      resetInputFeedback();
+      event.target.value = value;
+    }
+
+    if (value && index < guessInputs.length - 1) {
+      guessInputs[index + 1].focus();
+    }
+  });
+
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleGuess();
+      return;
+    }
+
+    if (event.key === 'Backspace' && !event.target.value && index > 0) {
+      event.preventDefault();
+      guessInputs[index - 1].focus();
+    }
+  });
+
+  input.addEventListener('focus', () => {
+    if (feedbackActive) {
+      resetInputFeedback();
+    }
+  });
+});
+
+startGame();
